@@ -14,475 +14,644 @@
 <link rel="icon" href="/icon.png">
 <link rel="apple-touch-icon" href="/icon.png">
 <style>
+  /* ------------------------------------------------------------------
+     The app's own tokens. Same greys, same tint, same 11px card radius,
+     so the site reads as a continuation of the product rather than a
+     separate marketing thing.
+     ------------------------------------------------------------------ */
   :root{
     color-scheme: light dark;
-    --bg:#f2f2f7; --bg-elev:#ffffff; --card:#ffffff;
-    --text:#1c1c1e; --muted:#6b6b70; --faint:#8e8e93;
-    --sep:rgba(60,60,67,.14); --tint:#007aff; --tint-deep:#0040dd;
-    --ok:#34c759; --warn:#ff9500; --bad:#ff3b30;
-    --fill:rgba(118,118,128,.10);
-    --shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 30px rgba(0,0,0,.06);
-    --maxw:1080px;
+    --bg:#f2f2f7;
+    --card:#ffffff;
+    --card-press:#e5e5ea;
+    --label:#1c1c1e;
+    --secondary:#8e8e93;
+    --tertiary:#c7c7cc;
+    --sep:rgba(60,60,67,.29);
+    --tint:#007aff;
+    --success:#34c759;
+    --warning:#ff9500;
+    --danger:#ff3b30;
+    --fill:rgba(118,118,128,.12);
+    --nav:rgba(249,249,249,.82);
+
+    --radius:11px;
+    --gutter:16px;
+    --measure:640px;
   }
   @media (prefers-color-scheme:dark){
     :root{
-      --bg:#000000; --bg-elev:#0c0c0e; --card:#1c1c1e;
-      --text:#f2f2f7; --muted:#a1a1a6; --faint:#8e8e93;
-      --sep:rgba(84,84,88,.5); --tint:#0a84ff; --tint-deep:#003ac2;
-      --ok:#30d158; --warn:#ff9f0a; --bad:#ff453a;
-      --fill:rgba(118,118,128,.20);
-      --shadow:0 1px 2px rgba(0,0,0,.3), 0 12px 40px rgba(0,0,0,.45);
+      --bg:#000000;
+      --card:#1c1c1e;
+      --card-press:#2c2c2e;
+      --label:#f2f2f7;
+      --secondary:#8e8e93;
+      --tertiary:#48484a;
+      --sep:rgba(84,84,88,.65);
+      --tint:#0a84ff;
+      --success:#30d158;
+      --warning:#ff9f0a;
+      --danger:#ff453a;
+      --fill:rgba(118,118,128,.24);
+      --nav:rgba(28,28,30,.82);
     }
   }
-  *{box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{
-    margin:0; background:var(--bg); color:var(--text);
-    font:400 17px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
-    -webkit-font-smoothing:antialiased; letter-spacing:-.01em;
-  }
-  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px}
-  section{padding:clamp(52px,8vw,96px) 0}
-  a{color:var(--tint); text-decoration:none}
 
-  /* ---- nav ---- */
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth; -webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--label);
+    font:400 17px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    letter-spacing:-.01em;
+  }
+  a{color:var(--tint); text-decoration:none}
+  /* Style only — never size here. `svg.glyph` would out-specify the single-class
+     sizing rules below and blow every inline icon up to fill its row. */
+  svg.glyph{fill:none; stroke:currentColor; stroke-width:2;
+            stroke-linecap:round; stroke-linejoin:round}
+
+  /* ---------- shell ---------- */
+  /* padding-inline only. A `padding` shorthand here out-specifies the block padding
+     on `section`/`.hero` and silently collapses every gap between sections. */
+  .shell{max-width:var(--measure); margin:0 auto; padding-inline:var(--gutter)}
+  .wide{max-width:900px; margin:0 auto; padding-inline:var(--gutter)}
+
+  /* ---------- nav ---------- */
   nav{
-    position:sticky; top:0; z-index:50;
+    position:sticky; top:0; z-index:60;
+    background:var(--nav);
     backdrop-filter:saturate(180%) blur(20px);
     -webkit-backdrop-filter:saturate(180%) blur(20px);
-    background:color-mix(in srgb, var(--bg) 78%, transparent);
-    border-bottom:1px solid var(--sep);
+    border-bottom:.5px solid var(--sep);
   }
-  nav .wrap{display:flex; align-items:center; gap:12px; height:54px}
-  nav img{width:28px;height:28px;border-radius:7px}
-  nav b{font-size:16px; font-weight:600; letter-spacing:-.02em}
-  nav .spacer{flex:1}
-  nav a.ghost{
-    font-size:15px; color:var(--muted); padding:7px 12px; border-radius:9px;
+  .nav-in{
+    max-width:900px; margin:0 auto; padding:0 var(--gutter);
+    height:52px; display:flex; align-items:center; gap:10px;
   }
-  nav a.ghost:hover{background:var(--fill); color:var(--text)}
-  nav a.cta{
+  .nav-brand{display:flex; align-items:center; gap:9px; min-width:0}
+  .nav-brand img{width:26px; height:26px; border-radius:6px; flex:none}
+  .nav-brand span{font-size:16px; font-weight:600; letter-spacing:-.02em; white-space:nowrap}
+  .nav-spacer{flex:1}
+  .nav-links{display:flex; gap:2px}
+  .nav-links a{
+    font-size:15px; color:var(--secondary); padding:6px 11px; border-radius:8px;
+    white-space:nowrap;
+  }
+  .nav-links a:hover{background:var(--fill); color:var(--label)}
+  .nav-cta{
     font-size:15px; font-weight:500; background:var(--tint); color:#fff;
-    padding:8px 16px; border-radius:10px;
+    padding:7px 15px; border-radius:9px; white-space:nowrap; flex:none;
+  }
+  /* Below the fold of a phone there is no room for anchors next to the CTA.
+     Dropping them entirely beats a hamburger for three in-page links. */
+  @media (max-width:640px){
+    .nav-links{display:none}
+    .nav-in{height:50px}
+    .nav-cta{padding:7px 13px; font-size:14.5px}
   }
 
-  /* ---- hero ---- */
-  .hero{padding-top:clamp(44px,6vw,76px); text-align:center}
-  .eyebrow{
+  /* ---------- hero ---------- */
+  .hero{padding-block:clamp(40px,7vw,72px) clamp(24px,4vw,36px); text-align:center}
+  .pill{
     display:inline-flex; align-items:center; gap:7px;
-    font-size:13px; font-weight:500; color:var(--muted);
-    background:var(--fill); padding:6px 13px; border-radius:20px; margin-bottom:22px;
+    font-size:13px; font-weight:500; color:var(--secondary);
+    background:var(--fill); padding:6px 13px; border-radius:100px; margin-bottom:20px;
   }
-  .eyebrow i{width:6px;height:6px;border-radius:3px;background:var(--ok);font-style:normal}
+  .pill i{width:7px; height:7px; border-radius:50%; background:var(--success); font-style:normal; flex:none}
   h1{
-    font-size:clamp(34px,6.2vw,62px); line-height:1.04; font-weight:700;
-    letter-spacing:-.035em; margin:0 0 18px;
+    font-size:clamp(28px,7.2vw,52px); line-height:1.08; font-weight:700;
+    letter-spacing:-.032em; margin:0 0 16px; text-wrap:balance;
   }
-  h1 .grad{
-    background:linear-gradient(120deg,var(--tint),var(--tint-deep));
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-  }
+  h1 em{font-style:normal; color:var(--tint)}
   .lede{
-    font-size:clamp(17px,2.2vw,21px); color:var(--muted); max-width:34rem;
-    margin:0 auto 30px; line-height:1.5;
+    font-size:clamp(16px,3.4vw,19px); line-height:1.5; color:var(--secondary);
+    margin:0 auto 26px; max-width:30rem;
   }
-  .actions{display:flex; gap:11px; justify-content:center; flex-wrap:wrap}
+  .cta-row{display:flex; gap:10px; justify-content:center; flex-wrap:wrap}
   .btn{
-    display:inline-flex; align-items:center; gap:8px; font-size:16px; font-weight:500;
-    padding:13px 24px; border-radius:13px; border:1px solid transparent; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    font-size:16px; font-weight:500; padding:13px 22px; border-radius:12px;
+    border:.5px solid transparent; cursor:pointer;
   }
-  .btn.primary{background:var(--tint); color:#fff}
-  .btn.primary:hover{filter:brightness(1.08)}
-  .btn.secondary{background:var(--card); color:var(--text); border-color:var(--sep); box-shadow:var(--shadow)}
-  .btn.secondary:hover{background:var(--fill)}
+  .btn .ic{width:18px; height:18px; flex:none}
+  .btn-primary{background:var(--tint); color:#fff}
+  .btn-secondary{background:var(--card); color:var(--label); border-color:var(--sep)}
+  @media (max-width:420px){ .cta-row .btn{flex:1 1 100%} }
 
-  /* ---- video ---- */
+  /* ---------- film ---------- */
+  .film-wrap{padding-inline:var(--gutter); margin:clamp(24px,4vw,36px) auto 0; max-width:900px}
   .film{
-    margin-top:clamp(38px,5vw,60px); border-radius:clamp(14px,2vw,20px); overflow:hidden;
-    box-shadow:var(--shadow); border:1px solid var(--sep); background:#0a0a0b;
-    aspect-ratio:16/9;
+    border-radius:14px; overflow:hidden; background:#0a0a0b;
+    border:.5px solid var(--sep); aspect-ratio:16/9;
   }
   .film video{width:100%; height:100%; display:block}
-  .film-note{
-    text-align:center; color:var(--faint); font-size:13px; margin-top:12px;
+  .film-cap{
+    text-align:center; color:var(--secondary); font-size:13px; margin:11px 0 0;
+  }
+  .btn .ic{width:18px; height:18px; flex:none}
+  summary .plus{width:15px; height:15px}
+
+  /* ---------- grouped sections (the app's inset lists) ---------- */
+  /* Generous, equal air above every section: a group footer sitting a few pixels
+     under the next heading was what made the page read as one run-on block. */
+  section{padding-block:clamp(56px,10vw,84px) 0}
+  section:last-of-type{padding-block-end:clamp(20px,4vw,32px)}
+
+  .title{
+    font-size:clamp(24px,5.4vw,32px); line-height:1.18; font-weight:700;
+    letter-spacing:-.03em; margin:0 0 8px; text-align:center; text-wrap:balance;
+  }
+  .subtitle{
+    font-size:16px; line-height:1.5; color:var(--secondary);
+    margin:0 auto clamp(24px,4vw,32px); max-width:30rem; text-align:center;
+    text-wrap:pretty;
   }
 
-  /* ---- steps ---- */
-  h2{
-    font-size:clamp(26px,3.6vw,38px); line-height:1.12; font-weight:700;
-    letter-spacing:-.03em; margin:0 0 12px;
+  .group{margin-top:30px}
+  .group:first-of-type{margin-top:0}
+  .group-head{
+    font-size:13px; font-weight:400; letter-spacing:.5px; text-transform:uppercase;
+    color:var(--secondary); padding:0 var(--gutter) 7px;
   }
-  .section-lede{color:var(--muted); font-size:17px; margin:0 0 34px; max-width:32rem}
-  .center{text-align:center}
-  .center .section-lede{margin-left:auto;margin-right:auto}
+  .group-foot{
+    font-size:13px; line-height:1.4; color:var(--secondary);
+    padding:7px var(--gutter) 0;
+  }
+  .list{background:var(--card); border-radius:var(--radius); overflow:hidden}
 
-  .steps{display:grid; grid-template-columns:repeat(auto-fit,minmax(228px,1fr)); gap:14px}
-  .step{
-    background:var(--card); border:1px solid var(--sep); border-radius:16px;
-    padding:24px 20px; box-shadow:var(--shadow);
+  .row{
+    display:flex; align-items:center; gap:12px;
+    padding:12px var(--gutter); position:relative; color:inherit;
   }
-  .step .n{
-    width:30px;height:30px;border-radius:9px;background:var(--tint);color:#fff;
-    display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;
-    margin-bottom:14px;
+  .row + .row::before{
+    content:''; position:absolute; top:0; left:57px; right:0;
+    height:1px; background:var(--sep); transform:scaleY(.5); transform-origin:top;
   }
-  .step h3{font-size:17px; font-weight:600; margin:0 0 6px; letter-spacing:-.01em}
-  .step p{margin:0; color:var(--muted); font-size:15px; line-height:1.5}
+  .row.no-badge + .row.no-badge::before,
+  .row + .row.no-badge::before{left:var(--gutter)}
+  a.row:active{background:var(--card-press)}
 
-  /* ---- features ---- */
-  .features{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px}
-  .feat{
-    background:var(--card); border:1px solid var(--sep); border-radius:16px; padding:22px 20px;
+  .badge{
+    width:29px; height:29px; border-radius:7px; flex:none; color:#fff;
+    display:flex; align-items:center; justify-content:center; padding:6px;
   }
-  .feat .g{font-size:22px; margin-bottom:12px; display:block}
-  .feat h3{font-size:16px; font-weight:600; margin:0 0 5px}
-  .feat p{margin:0; color:var(--muted); font-size:14.5px; line-height:1.5}
-
-  /* ---- download ---- */
-  .dl-grid{display:grid; grid-template-columns:1fr; gap:12px}
-  @media (min-width:660px){ .dl-grid{grid-template-columns:repeat(2,1fr)} }
-  .dl{
-    display:flex; align-items:center; gap:14px; text-decoration:none; color:inherit;
-    background:var(--card); border:1px solid var(--sep); border-radius:15px;
-    padding:17px 18px; box-shadow:var(--shadow); transition:transform .12s ease;
+  .badge svg{width:100%; height:100%}
+  .row-body{flex:1; min-width:0}
+  .row-title{
+    font-size:17px; line-height:1.3; letter-spacing:-.02em;
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
   }
-  .dl:hover{transform:translateY(-2px)}
-  .dl.rec{border-color:var(--tint); box-shadow:0 0 0 3px color-mix(in srgb,var(--tint) 16%,transparent)}
-  .dl .ico{
-    width:42px;height:42px;border-radius:11px;background:var(--fill);
-    display:flex;align-items:center;justify-content:center;font-size:19px;flex:none;
-  }
-  .dl .meta{flex:1; min-width:0}
-  .dl .t{font-size:16px; font-weight:600; display:flex; align-items:center; gap:8px}
-  .dl .badge{
-    font-size:10.5px; font-weight:600; letter-spacing:.4px; text-transform:uppercase;
+  .row-sub{font-size:13px; line-height:1.42; color:var(--secondary); margin-top:3px}
+  .chev{width:15px; height:15px; color:var(--tertiary); flex:none; align-self:center}
+  .tag{
+    font-size:11px; font-weight:600; letter-spacing:.3px; text-transform:uppercase;
     background:var(--tint); color:#fff; padding:2px 7px; border-radius:5px;
   }
-  .dl .s{font-size:13.5px; color:var(--muted); margin-top:2px}
-  .dl .arrow{color:var(--faint); font-size:17px}
 
+  /* ---------- callout ---------- */
   .callout{
-    background:var(--card); border:1px solid var(--sep); border-left:3px solid var(--warn);
-    border-radius:14px; padding:20px 22px; margin-top:22px;
+    background:var(--card); border-radius:var(--radius);
+    padding:16px var(--gutter); display:flex; gap:12px; align-items:flex-start;
   }
-  .callout h3{margin:0 0 7px; font-size:16px; font-weight:600}
-  .callout p{margin:0; color:var(--muted); font-size:15px; line-height:1.55}
+  .callout .badge{margin-top:1px}
+  .callout h3{margin:0 0 4px; font-size:17px; font-weight:600; letter-spacing:-.02em}
+  .callout p{margin:0; font-size:14px; line-height:1.5; color:var(--secondary)}
 
-  /* ---- contact ---- */
-  .contact{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px}
-  .c{
-    display:flex; align-items:center; gap:13px; text-decoration:none; color:inherit;
-    background:var(--card); border:1px solid var(--sep); border-radius:15px;
-    padding:16px 18px; box-shadow:var(--shadow); transition:transform .12s ease;
+  /* ---------- faq ---------- */
+  details{position:relative}
+  details + details::before{
+    content:''; position:absolute; top:0; left:var(--gutter); right:0;
+    height:1px; background:var(--sep); transform:scaleY(.5); transform-origin:top;
   }
-  .c:hover{transform:translateY(-2px)}
-  .c .ico{
-    width:40px;height:40px;border-radius:11px; flex:none;
-    display:flex;align-items:center;justify-content:center;
+  summary{
+    list-style:none; cursor:pointer; padding:13px var(--gutter);
+    display:flex; align-items:center; gap:12px;
+    font-size:16.5px; letter-spacing:-.02em;
   }
-  .c .t{font-size:15.5px; font-weight:600}
-  .c .h{font-size:13.5px; color:var(--muted); margin-top:1px}
-  .c svg{width:20px;height:20px;fill:#fff}
+  summary::-webkit-details-marker{display:none}
+  summary .plus{
+    margin-left:auto; width:15px; height:15px; color:var(--tertiary); flex:none;
+    transition:transform .2s ease;
+  }
+  details[open] summary .plus{transform:rotate(45deg)}
+  details p{
+    margin:0; padding:0 var(--gutter) 15px;
+    font-size:14.5px; line-height:1.55; color:var(--secondary);
+  }
 
-  /* ---- faq ---- */
-  details{
-    background:var(--card); border:1px solid var(--sep); border-radius:14px;
-    padding:16px 18px; margin-bottom:9px;
+  /* ---------- footer ---------- */
+  footer{
+    border-top:.5px solid var(--sep); margin-top:clamp(38px,6vw,58px);
+    padding:30px var(--gutter) 40px; text-align:center;
   }
-  details summary{
-    cursor:pointer; font-size:16px; font-weight:600; list-style:none;
-    display:flex; justify-content:space-between; align-items:center; gap:12px;
+  footer .mark{
+    font-size:13px; font-weight:600; letter-spacing:1.4px; color:var(--secondary);
   }
-  details summary::-webkit-details-marker{display:none}
-  details summary::after{content:'+'; color:var(--faint); font-weight:400; font-size:19px}
-  details[open] summary::after{content:'–'}
-  details p{margin:11px 0 0; color:var(--muted); font-size:15px; line-height:1.55}
-
-  footer{border-top:1px solid var(--sep); padding:34px 0 44px; text-align:center}
-  footer .brand{font-size:14px; font-weight:600; letter-spacing:1px; color:var(--muted)}
-  footer .sub{font-size:13px; color:var(--faint); margin-top:6px; line-height:1.6}
-
-  @media (max-width:560px){
-    .actions .btn{flex:1 1 100%; justify-content:center}
+  footer .fine{
+    font-size:12.5px; line-height:1.65; color:var(--tertiary); margin-top:7px;
   }
 </style>
 </head>
 <body>
 
+<!-- Icon sprite. Feather-style strokes, so every glyph sits on the same optical weight. -->
+<svg style="display:none" aria-hidden="true" focusable="false">
+  <symbol id="i-phone-missed" viewBox="0 0 24 24">
+    <line x1="23" y1="1" x2="17" y2="7"/><line x1="17" y1="1" x2="23" y2="7"/>
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+  </symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+  </symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24">
+    <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+    <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+    <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+    <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/>
+    <line x1="17" y1="16" x2="23" y2="16"/>
+  </symbol>
+  <symbol id="i-send" viewBox="0 0 24 24">
+    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+  </symbol>
+  <symbol id="i-hash" viewBox="0 0 24 24">
+    <line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/>
+    <line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/>
+  </symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+  </symbol>
+  <symbol id="i-list" viewBox="0 0 24 24">
+    <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+    <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+    <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+  </symbol>
+  <symbol id="i-contrast" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </symbol>
+  <symbol id="i-smartphone" viewBox="0 0 24 24">
+    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+    <line x1="12" y1="18" x2="12.01" y2="18"/>
+  </symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+  </symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24">
+    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+    <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+  </symbol>
+  <symbol id="i-download" viewBox="0 0 24 24">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  </symbol>
+  <symbol id="i-play" viewBox="0 0 24 24">
+    <polygon points="6 3 20 12 6 21 6 3" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="i-key" viewBox="0 0 24 24">
+    <path d="M21 2l-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/>
+    <path d="M15.5 7.5l3 3L22 7l-3-3"/>
+  </symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    <polyline points="9 12 11 14 15 10"/>
+  </symbol>
+  <!-- Brand marks are solid, not stroked. -->
+  <symbol id="b-whatsapp" viewBox="0 0 24 24">
+    <path fill="currentColor" stroke="none" d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.48-1.75-1.65-2.05-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.19 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.42-.07-.13-.27-.2-.57-.35M12.05 21.8h-.01a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37a9.86 9.86 0 0 1-1.51-5.26c0-5.45 4.44-9.88 9.9-9.88a9.82 9.82 0 0 1 6.99 2.9 9.82 9.82 0 0 1 2.9 6.99c0 5.45-4.44 9.88-9.9 9.88m8.41-18.29A11.81 11.81 0 0 0 12.05 0C5.5 0 .17 5.33.17 11.88c0 2.1.55 4.14 1.59 5.95L.07 24l6.33-1.66a11.85 11.85 0 0 0 5.65 1.44h.01c6.55 0 11.88-5.33 11.88-11.88 0-3.17-1.24-6.15-3.48-8.39"/>
+  </symbol>
+  <symbol id="b-telegram" viewBox="0 0 24 24">
+    <path fill="currentColor" stroke="none" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0m5.562 8.161-1.858 8.762c-.14.634-.52.79-1.05.492l-2.9-2.137-1.4 1.348c-.155.155-.284.284-.583.284l.208-2.95 5.37-4.852c.233-.208-.05-.324-.363-.116L8.36 13.05l-2.86-.895c-.622-.194-.634-.622.13-.92l11.18-4.31c.518-.194.97.116.752 1.236"/>
+  </symbol>
+  <symbol id="b-instagram" viewBox="0 0 24 24">
+    <path fill="currentColor" stroke="none" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069M12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0m0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324M12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8m6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881"/>
+  </symbol>
+</svg>
+
 <nav>
-  <div class="wrap">
-    <img src="/icon.png" alt="">
-    <b>Autoreply</b>
-    <span class="spacer"></span>
-    <a class="ghost" href="#how">How it works</a>
-    <a class="ghost" href="#faq">FAQ</a>
-    <a class="cta" href="#download">Download</a>
+  <div class="nav-in">
+    <a class="nav-brand" href="#top">
+      <img src="/icon.png" alt="">
+      <span>Autoreply</span>
+    </a>
+    <div class="nav-spacer"></div>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a class="nav-cta" href="#download">Download</a>
   </div>
 </nav>
 
-<header class="wrap hero">
-  <div class="eyebrow"><i></i> Android · free · no account</div>
-  <h1>Can’t get to your calls?<br><span class="grad">Send them a message.</span></h1>
+<header id="top" class="hero wide">
+  <div class="pill"><i></i> Android · free · no account</div>
+  <h1>Can’t get to your calls?<br><em>Send them a message.</em></h1>
   <p class="lede">
     Autoreply notices the calls you didn’t answer and replies for you — a minute later,
     over WhatsApp or a plain text. Your phone never leaves your pocket.
   </p>
-  <div class="actions">
-    <a class="btn primary" href="#download">Download the APK</a>
-    <a class="btn secondary" href="#how">See how it works</a>
+  <div class="cta-row">
+    <a class="btn btn-primary" href="#download">
+      <svg class="glyph ic"><use href="#i-download"/></svg> Download the APK
+    </a>
+    <a class="btn btn-secondary" href="#how">
+      <svg class="glyph ic"><use href="#i-play"/></svg> See how it works
+    </a>
   </div>
+</header>
 
+<div class="film-wrap">
   <div class="film">
     <video src="/explainer.mp4" poster="/poster.jpg" autoplay muted loop playsinline controls></video>
   </div>
-  <p class="film-note">24 seconds. Sound not needed.</p>
-</header>
+  <p class="film-cap">24 seconds. Sound not needed.</p>
+</div>
 
-<section id="how" class="wrap">
-  <div class="center">
-    <h2>Four things happen while you’re busy</h2>
-    <p class="section-lede">
-      No buttons, no shortcuts to remember. It runs in the background and only acts when
-      a call genuinely goes unanswered.
-    </p>
-  </div>
-  <div class="steps">
-    <div class="step">
-      <div class="n">1</div>
-      <h3>It sees the missed call</h3>
-      <p>The phone rang and went quiet without being picked up. Answered calls, rejections and outgoing calls are left alone.</p>
+<section id="how" class="shell">
+  <h2 class="title">Four things happen while you’re busy</h2>
+  <p class="subtitle">
+    No buttons, no shortcuts to remember. It only acts when a call genuinely goes unanswered.
+  </p>
+
+  <div class="group">
+    <div class="group-head">The sequence</div>
+    <div class="list">
+      <div class="row">
+        <span class="badge" style="background:var(--danger)"><svg class="glyph"><use href="#i-phone-missed"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">It sees the missed call</div>
+          <div class="row-sub">The phone rang and went quiet without being picked up. Answered calls, rejections and outgoing calls are left alone.</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="badge" style="background:var(--warning)"><svg class="glyph"><use href="#i-clock"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">It waits a minute</div>
+          <div class="row-sub">Your chance to call back first. If you do, the reply is cancelled — nothing is sent after the conversation already happened.</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="badge" style="background:var(--tint)"><svg class="glyph"><use href="#i-sliders"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">It picks the right words</div>
+          <div class="row-sub">First call, second call, third — each can say something different. Add time windows, or limit a rule to unknown numbers.</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="badge" style="background:var(--success)"><svg class="glyph"><use href="#i-send"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">It sends, silently</div>
+          <div class="row-sub">WhatsApp through the server bridge, or SMS straight from the phone. Nothing appears on screen and the device can stay locked.</div>
+        </div>
+      </div>
     </div>
-    <div class="step">
-      <div class="n">2</div>
-      <h3>It waits a minute</h3>
-      <p>Your chance to call back first. If you do, the reply is cancelled — nothing is sent after the conversation already happened.</p>
-    </div>
-    <div class="step">
-      <div class="n">3</div>
-      <h3>It picks the right words</h3>
-      <p>First call, second call, third — each can say something different. Add time windows or limit it to unknown numbers.</p>
-    </div>
-    <div class="step">
-      <div class="n">4</div>
-      <h3>It sends, silently</h3>
-      <p>WhatsApp through the server bridge, or SMS straight from the phone. Nothing appears on screen, and the device can stay locked.</p>
+    <div class="group-foot">
+      Rules are checked from the top down and the first match wins.
     </div>
   </div>
 </section>
 
-<section class="wrap">
-  <div class="center">
-    <h2>Built to stay out of the way</h2>
-    <p class="section-lede">The details that decide whether something like this is actually usable.</p>
-  </div>
-  <div class="features">
-    <div class="feat">
-      <span class="g">🔢</span>
-      <h3>Rules by attempt</h3>
-      <p>“Busy right now” on the first call. “Is it urgent?” on the second. “Calling you back in 15” on the third.</p>
-    </div>
-    <div class="feat">
-      <span class="g">🧠</span>
-      <h3>Knows when to shut up</h3>
-      <p>Quiet hours, a repeat guard, block and allow lists, and a counter that resets once you’ve actually spoken.</p>
-    </div>
-    <div class="feat">
-      <span class="g">🔒</span>
-      <h3>Works locked</h3>
-      <p>SMS goes out through the radio and WhatsApp through the bridge. Neither needs the screen on.</p>
-    </div>
-    <div class="feat">
-      <span class="g">📋</span>
-      <h3>A log you can trust</h3>
-      <p>Every call, every message, every delivery receipt — and the reason when something was skipped or cancelled.</p>
-    </div>
-    <div class="feat">
-      <span class="g">🌗</span>
-      <h3>Light and dark</h3>
-      <p>Follows the system, or pin it. Simple iOS-style screens, English throughout.</p>
-    </div>
-    <div class="feat">
-      <span class="g">🔔</span>
-      <h3>One notification a day</h3>
-      <p>An end-of-day summary of what went out. Nothing else interrupts you — except a reply that failed.</p>
+<section id="features" class="shell">
+  <h2 class="title">Built to stay out of the way</h2>
+  <p class="subtitle">The details that decide whether something like this is actually usable.</p>
+
+  <div class="group">
+    <div class="group-head">What it does</div>
+    <div class="list">
+      <div class="row">
+        <span class="badge" style="background:var(--tint)"><svg class="glyph"><use href="#i-hash"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">Rules by attempt</div>
+          <div class="row-sub">“Busy right now” on the first call. “Is it urgent?” on the second. “Calling you back in 15” on the third.</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="badge" style="background:#5e5ce6"><svg class="glyph"><use href="#i-moon"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">Knows when to stay quiet</div>
+          <div class="row-sub">Quiet hours, a repeat guard, block and allow lists, and a counter that resets once you’ve actually spoken.</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="badge" style="background:var(--success)"><svg class="glyph"><use href="#i-lock"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">Works locked</div>
+          <div class="row-sub">SMS goes out through the radio, WhatsApp through the bridge. Neither needs the screen on.</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="badge" style="background:var(--warning)"><svg class="glyph"><use href="#i-list"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">A log you can trust</div>
+          <div class="row-sub">Every call, every message, every delivery receipt — and the reason when something was skipped or cancelled.</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="badge" style="background:#8e8e93"><svg class="glyph"><use href="#i-contrast"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">Light and dark</div>
+          <div class="row-sub">Follows the system, or pin it. Simple iOS-style screens, English throughout.</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="badge" style="background:var(--danger)"><svg class="glyph"><use href="#i-bell"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">One notification a day</div>
+          <div class="row-sub">An end-of-day summary of what went out. Nothing else interrupts you — except a reply that failed.</div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<section id="download" class="wrap">
-  <div class="center">
-    <h2>Download</h2>
-    <p class="section-lede">
-      Android 8.0 or newer. Not on Google Play — install the APK directly.
-    </p>
+<section id="download" class="shell">
+  <h2 class="title">Download</h2>
+  <p class="subtitle">Android 8.0 or newer. Not on Google Play — install the APK directly.</p>
+
+  <div class="group">
+    <div class="group-head">Choose a build</div>
+    <div class="list" id="dlList">
+      <a class="row" href="/download/Autoreply-arm64-v8a.apk" download data-abi="arm64-v8a">
+        <span class="badge" style="background:var(--tint)"><svg class="glyph"><use href="#i-smartphone"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">arm64-v8a <span class="tag">Most phones</span></div>
+          <div class="row-sub" data-base="Every Android phone from the last few years">Every Android phone from the last few years</div>
+        </div>
+        <svg class="glyph chev"><use href="#i-download"/></svg>
+      </a>
+      <a class="row" href="/download/Autoreply-universal.apk" download data-abi="universal">
+        <span class="badge" style="background:#5e5ce6"><svg class="glyph"><use href="#i-globe"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">Universal</div>
+          <div class="row-sub" data-base="Runs anywhere · larger file">Runs anywhere · larger file</div>
+        </div>
+        <svg class="glyph chev"><use href="#i-download"/></svg>
+      </a>
+      <a class="row" href="/download/Autoreply-armeabi-v7a.apk" download data-abi="armeabi-v7a">
+        <span class="badge" style="background:#8e8e93"><svg class="glyph"><use href="#i-smartphone"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">armeabi-v7a</div>
+          <div class="row-sub" data-base="Older 32-bit devices">Older 32-bit devices</div>
+        </div>
+        <svg class="glyph chev"><use href="#i-download"/></svg>
+      </a>
+      <a class="row" href="/download/Autoreply-x86_64.apk" download data-abi="x86_64">
+        <span class="badge" style="background:#8e8e93"><svg class="glyph"><use href="#i-monitor"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">x86_64</div>
+          <div class="row-sub" data-base="Emulators and Intel tablets">Emulators and Intel tablets</div>
+        </div>
+        <svg class="glyph chev"><use href="#i-download"/></svg>
+      </a>
+    </div>
+    <div class="group-foot">
+      Not sure? Take arm64-v8a — it covers essentially every phone sold in recent years.
+    </div>
   </div>
 
-  <div class="dl-grid" id="dlGrid">
-    <a class="dl rec" href="/download/Autoreply-arm64-v8a.apk" download data-abi="arm64-v8a">
-      <div class="ico">📱</div>
-      <div class="meta">
-        <div class="t">arm64-v8a <span class="badge">Most phones</span></div>
-        <div class="s">Every Android phone from the last few years</div>
-      </div>
-      <div class="arrow">↓</div>
-    </a>
-    <a class="dl" href="/download/Autoreply-universal.apk" download data-abi="universal">
-      <div class="ico">🌍</div>
-      <div class="meta">
-        <div class="t">Universal</div>
-        <div class="s">Works everywhere · bigger file</div>
-      </div>
-      <div class="arrow">↓</div>
-    </a>
-    <a class="dl" href="/download/Autoreply-armeabi-v7a.apk" download data-abi="armeabi-v7a">
-      <div class="ico">🕰️</div>
-      <div class="meta">
-        <div class="t">armeabi-v7a</div>
-        <div class="s">Older 32-bit devices</div>
-      </div>
-      <div class="arrow">↓</div>
-    </a>
-    <a class="dl" href="/download/Autoreply-x86_64.apk" download data-abi="x86_64">
-      <div class="ico">🖥️</div>
-      <div class="meta">
-        <div class="t">x86_64</div>
-        <div class="s">Emulators and Intel tablets</div>
-      </div>
-      <div class="arrow">↓</div>
-    </a>
-  </div>
-
-  <div class="callout">
-    <h3>You’ll need an invite key</h3>
-    <p>
-      WhatsApp delivery runs through a private bridge, so the app asks for a one-time invite
-      key during setup. Message me on any of the accounts below and I’ll send you one.
-      SMS replies work straight away without it.
-    </p>
-  </div>
-</section>
-
-<section class="wrap">
-  <div class="center">
-    <h2>Ask me for a key</h2>
-    <p class="section-lede">Same username everywhere — <b>qiyascc</b>.</p>
-  </div>
-  <div class="contact">
-    <a class="c" href="https://wa.me/qiyascc" target="_blank" rel="noopener">
-      <div class="ico" style="background:#25D366">
-        <svg viewBox="0 0 24 24"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.48-1.75-1.65-2.05-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.08c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.19 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.42-.07-.13-.27-.2-.57-.35M12.05 21.8h-.01a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37a9.86 9.86 0 0 1-1.51-5.26c0-5.45 4.44-9.88 9.9-9.88a9.82 9.82 0 0 1 6.99 2.9 9.82 9.82 0 0 1 2.9 6.99c0 5.45-4.44 9.88-9.9 9.88m8.41-18.29A11.81 11.81 0 0 0 12.05 0C5.5 0 .17 5.33.17 11.88c0 2.1.55 4.14 1.59 5.95L.07 24l6.33-1.66a11.85 11.85 0 0 0 5.65 1.44h.01c6.55 0 11.88-5.33 11.88-11.88 0-3.17-1.24-6.15-3.48-8.39"/></svg>
-      </div>
+  <div class="group">
+    <div class="callout">
+      <span class="badge" style="background:var(--warning)"><svg class="glyph"><use href="#i-key"/></svg></span>
       <div>
-        <div class="t">WhatsApp</div>
-        <div class="h">wa.me/qiyascc</div>
+        <h3>You’ll need an invite key</h3>
+        <p>
+          WhatsApp delivery runs through a private bridge, so the app asks for a one-time
+          invite key during setup. Message me on any account below and I’ll send you one.
+          SMS replies work straight away without it.
+        </p>
       </div>
-    </a>
-    <a class="c" href="https://t.me/qiyascc" target="_blank" rel="noopener">
-      <div class="ico" style="background:#2AABEE">
-        <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0m5.562 8.161-1.858 8.762c-.14.634-.52.79-1.05.492l-2.9-2.137-1.4 1.348c-.155.155-.284.284-.583.284l.208-2.95 5.37-4.852c.233-.208-.05-.324-.363-.116L8.36 13.05l-2.86-.895c-.622-.194-.634-.622.13-.92l11.18-4.31c.518-.194.97.116.752 1.236"/></svg>
-      </div>
-      <div>
-        <div class="t">Telegram</div>
-        <div class="h">t.me/qiyascc</div>
-      </div>
-    </a>
-    <a class="c" href="https://instagram.com/qiyascc" target="_blank" rel="noopener">
-      <div class="ico" style="background:linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)">
-        <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069M12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0m0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324M12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8m6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881"/></svg>
-      </div>
-      <div>
-        <div class="t">Instagram</div>
-        <div class="h">instagram.com/qiyascc</div>
-      </div>
-    </a>
+    </div>
   </div>
 </section>
 
-<section id="faq" class="wrap">
-  <div class="center"><h2>Questions</h2></div>
-  <details>
-    <summary>Is there an iPhone version?</summary>
-    <p>No, and there can’t be. iOS does not let an app see missed calls in the background, send a text on its own, or drive WhatsApp. Android only.</p>
-  </details>
-  <details>
-    <summary>Why isn’t it on Google Play?</summary>
-    <p>Play restricts the SMS permission to apps that are your default messaging app. Installing the APK directly avoids that, and keeps the app free of any account or tracking.</p>
-  </details>
-  <details>
-    <summary>Do I need the invite key?</summary>
-    <p>Only for WhatsApp. Text replies work the moment you install it. The key links your phone to the bridge that sends WhatsApp messages on your behalf.</p>
-  </details>
-  <details>
-    <summary>Will it reply after I’ve already called back?</summary>
-    <p>No. Just before sending, it re-reads the call log. If you called them back, or answered a later call from the same number, the reply is cancelled and the log records why.</p>
-  </details>
-  <details>
-    <summary>Does WhatsApp show anything on my screen?</summary>
-    <p>Not in the default mode — the bridge sends it from the server while your phone stays locked. There is an optional on-device mode that opens WhatsApp and taps send, but it needs the screen unlocked and is off by default.</p>
-  </details>
-  <details>
-    <summary>I have a Xiaomi, Redmi or POCO phone.</summary>
-    <p>Then the setup wizard has extra steps for you. MIUI kills background apps unless Autostart is on and the battery policy is set to “No restrictions”. The app walks you to both, and warns you on the home screen if the system starts blocking it again.</p>
-  </details>
-  <details>
-    <summary>Which file do I download?</summary>
-    <p>arm64-v8a covers essentially every phone sold in the last several years. If you’re unsure, take Universal — it’s larger but runs anywhere.</p>
-  </details>
+<section id="contact" class="shell">
+  <h2 class="title">Ask me for a key</h2>
+  <p class="subtitle">Same username everywhere — <b>qiyascc</b>.</p>
+
+  <div class="group">
+    <div class="group-head">Get in touch</div>
+    <div class="list">
+      <a class="row" href="https://wa.me/qiyascc" target="_blank" rel="noopener">
+        <span class="badge" style="background:#25d366"><svg class="glyph"><use href="#b-whatsapp"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">WhatsApp</div>
+          <div class="row-sub">wa.me/qiyascc</div>
+        </div>
+        <svg class="glyph chev"><use href="#i-chev"/></svg>
+      </a>
+      <a class="row" href="https://t.me/qiyascc" target="_blank" rel="noopener">
+        <span class="badge" style="background:#2aabee"><svg class="glyph"><use href="#b-telegram"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">Telegram</div>
+          <div class="row-sub">t.me/qiyascc</div>
+        </div>
+        <svg class="glyph chev"><use href="#i-chev"/></svg>
+      </a>
+      <a class="row" href="https://instagram.com/qiyascc" target="_blank" rel="noopener">
+        <span class="badge" style="background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af)"><svg class="glyph"><use href="#b-instagram"/></svg></span>
+        <div class="row-body">
+          <div class="row-title">Instagram</div>
+          <div class="row-sub">instagram.com/qiyascc</div>
+        </div>
+        <svg class="glyph chev"><use href="#i-chev"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section id="faq" class="shell">
+  <h2 class="title">Questions</h2>
+
+  <div class="group">
+    <div class="list">
+      <details>
+        <summary>Is there an iPhone version?<svg class="glyph plus"><use href="#i-plus"/></svg></summary>
+        <p>No, and there can’t be. iOS does not let an app see missed calls in the background, send a text on its own, or drive WhatsApp. Android only.</p>
+      </details>
+      <details>
+        <summary>Why isn’t it on Google Play?<svg class="glyph plus"><use href="#i-plus"/></svg></summary>
+        <p>Play restricts the SMS permission to apps that are your default messaging app. Installing the APK directly avoids that, and keeps the app free of any account or tracking.</p>
+      </details>
+      <details>
+        <summary>Do I need the invite key?<svg class="glyph plus"><use href="#i-plus"/></svg></summary>
+        <p>Only for WhatsApp. Text replies work the moment you install it. The key links your phone to the bridge that sends WhatsApp messages on your behalf.</p>
+      </details>
+      <details>
+        <summary>Will it reply after I’ve already called back?<svg class="glyph plus"><use href="#i-plus"/></svg></summary>
+        <p>No. Just before sending, it re-reads the call log. If you called them back, or answered a later call from the same number, the reply is cancelled and the log records why.</p>
+      </details>
+      <details>
+        <summary>Does WhatsApp appear on my screen?<svg class="glyph plus"><use href="#i-plus"/></svg></summary>
+        <p>Not in the default mode — the bridge sends it from the server while your phone stays locked. There is an optional on-device mode that opens WhatsApp and taps send, but it needs the screen unlocked and is off by default.</p>
+      </details>
+      <details>
+        <summary>I have a Xiaomi, Redmi or POCO phone.<svg class="glyph plus"><use href="#i-plus"/></svg></summary>
+        <p>Then the setup wizard has extra steps for you. MIUI kills background apps unless Autostart is on and the battery policy is set to “No restrictions”. The app walks you to both, and warns you on the home screen if the system starts blocking it again.</p>
+      </details>
+    </div>
+  </div>
 </section>
 
 <footer>
-  <div class="wrap">
-    <div class="brand">QIYAS CC</div>
-    <div class="sub">
-      Designed and built by Qiyas CC · ctm.ubermensch.cc<br>
-      Autoreply is not affiliated with WhatsApp or Meta.
-    </div>
+  <div class="mark">QIYAS CC</div>
+  <div class="fine">
+    Designed and built by Qiyas CC · ctm.ubermensch.cc<br>
+    Autoreply is not affiliated with WhatsApp or Meta.
   </div>
 </footer>
 
 <script>
-// Nudge the visitor toward the build that matches their device, without hiding the rest.
-// Only meaningful on Android: a desktop visitor is downloading the file to sideload onto
-// a phone, so telling them "x86_64 is your device" would be actively wrong.
 (function () {
-  var ua = navigator.userAgent || '';
-  if (!/Android/i.test(ua)) return;
+  var rows = document.querySelectorAll('#dlList .row');
 
-  var guess = 'arm64-v8a'; // the safe default for anything modern
-  if (/aarch64|arm64/i.test(ua)) guess = 'arm64-v8a';
-  else if (/armv7|armv8l/i.test(ua)) guess = 'armeabi-v7a';
-  else if (/x86_64/i.test(ua)) guess = 'x86_64';
-
-  var cards = document.querySelectorAll('#dlGrid .dl');
-  cards.forEach(function (card) {
-    var match = card.getAttribute('data-abi') === guess;
-    card.classList.toggle('rec', match);
-    var badge = card.querySelector('.badge');
-    if (match && !badge) {
-      var b = document.createElement('span');
-      b.className = 'badge';
-      b.textContent = 'Your device';
-      card.querySelector('.t').appendChild(b);
-    } else if (match && badge) {
-      badge.textContent = 'Your device';
-    } else if (badge) {
-      badge.remove();
-    }
-  });
-})();
-
-// Fill in the real file sizes so nobody downloads 50 MB by accident.
-(function () {
-  document.querySelectorAll('#dlGrid .dl').forEach(function (card) {
-    fetch(card.getAttribute('href'), { method: 'HEAD' })
+  // Real file sizes, so nobody pulls 48 MB by accident.
+  rows.forEach(function (row) {
+    var sub = row.querySelector('.row-sub');
+    fetch(row.getAttribute('href'), { method: 'HEAD' })
       .then(function (r) {
         var len = r.headers.get('content-length');
         if (!len) return;
-        var mb = (parseInt(len, 10) / 1048576).toFixed(1);
-        var s = card.querySelector('.s');
-        s.textContent = s.textContent + ' · ' + mb + ' MB';
+        sub.textContent = sub.dataset.base + ' · ' + (parseInt(len, 10) / 1048576).toFixed(1) + ' MB';
       })
       .catch(function () {});
+  });
+
+  // Point Android visitors at the matching build. On a desktop the visitor is
+  // sideloading to a phone, so "x86_64 is your device" would be wrong advice.
+  var ua = navigator.userAgent || '';
+  if (!/Android/i.test(ua)) return;
+
+  var guess = 'arm64-v8a';
+  if (/armv7|armv8l/i.test(ua)) guess = 'armeabi-v7a';
+  else if (/x86_64/i.test(ua)) guess = 'x86_64';
+
+  rows.forEach(function (row) {
+    var tag = row.querySelector('.tag');
+    if (row.dataset.abi === guess) {
+      if (!tag) {
+        tag = document.createElement('span');
+        tag.className = 'tag';
+        row.querySelector('.row-title').appendChild(tag);
+      }
+      tag.textContent = 'Your device';
+    } else if (tag) {
+      tag.remove();
+    }
   });
 })();
 </script>
