@@ -28,6 +28,7 @@ export class SendError extends Error {
       | 'not_on_whatsapp'
       | 'timeout'
       | 'unknown_session'
+      | 'needs_pairing'
       | 'send_failed',
   ) {
     super(message)
@@ -180,17 +181,27 @@ class SessionManager {
         return
       }
 
-      if (
-        statusCode === DisconnectReason.loggedOut ||
-        statusCode === DisconnectReason.forbidden ||
-        statusCode === DisconnectReason.badSession ||
-        statusCode === DisconnectReason.multideviceMismatch
-      ) {
-        log.warn({ sessionId: rt.id, statusCode, reason }, 'session terminated by WhatsApp')
+      // Only an explicit logout destroys credentials. Everything else keeps them: once
+      // the auth keys are gone the only way back is re-pairing by hand, so throwing them
+      // away on a transient error costs far more than a few pointless reconnects.
+      if (statusCode === DisconnectReason.loggedOut) {
+        log.warn({ sessionId: rt.id, statusCode, reason }, 'unlinked from the phone')
         rt.clear()
         rt.sock = null
         rt.pairingCodeIssued = false
         this.setStatus(rt.id, 'logged_out', reason)
+        return
+      }
+
+      // Retrying these only starts a fight with whatever ended the session, but the
+      // credentials stay put so an explicit reconnect can still recover.
+      if (
+        statusCode === DisconnectReason.forbidden ||
+        statusCode === DisconnectReason.connectionReplaced
+      ) {
+        log.warn({ sessionId: rt.id, statusCode, reason }, 'session stopped, not retrying')
+        rt.sock = null
+        this.setStatus(rt.id, 'disconnected', reason)
         return
       }
 
@@ -315,6 +326,36 @@ class SessionManager {
       error,
       now(),
     )
+  }
+
+  /** True while the session still holds usable credentials, i.e. can reconnect without re-pairing. */
+  hasCredentials(sessionId: string): boolean {
+    const row = queries.countCreds.get(sessionId)
+    return (row?.n ?? 0) > 0
+  }
+
+  /**
+   * Brings a stopped session back without re-pairing. Only useful while the credentials
+   * survive — after an explicit logout there is nothing left to reconnect with.
+   */
+  async reconnect(sessionId: string): Promise<void> {
+    const row = queries.sessionById.get(sessionId)
+    if (!row) throw new SendError('unknown session', 'unknown_session')
+    if (this.isConnected(sessionId)) return
+    if (!this.hasCredentials(sessionId)) {
+      throw new SendError('this session has no credentials left — pair again', 'needs_pairing')
+    }
+
+    const rt = this.runtimes.get(sessionId)
+    if (rt) {
+      if (rt.reconnectTimer) clearTimeout(rt.reconnectTimer)
+      rt.reconnectTimer = null
+      rt.reconnectAttempts = 0
+      rt.stopping = false
+      rt.sock = null
+    }
+    queries.updateSessionStatus.run('disconnected', now(), null, sessionId)
+    await this.start({ ...row, status: 'disconnected' })
   }
 
   async logout(sessionId: string): Promise<void> {

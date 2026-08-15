@@ -17,6 +17,23 @@ async function main(): Promise<void> {
     bodyLimit: 64 * 1024,
   })
 
+  // Java's HttpURLConnection labels a bodyless POST as form-urlencoded, which Fastify
+  // rejects with a 415. Several endpoints legitimately take no body, so treat an empty
+  // payload as `{}` rather than making every client send `{}` explicitly.
+  app.addContentTypeParser(
+    'application/x-www-form-urlencoded',
+    { parseAs: 'string' },
+    (_req, body, done) => {
+      const text = String(body ?? '').trim()
+      if (text.length === 0) return done(null, {})
+      try {
+        done(null, JSON.parse(text))
+      } catch {
+        done(null, {})
+      }
+    },
+  )
+
   app.get('/healthz', async () => ({ ok: true, uptime: process.uptime() }))
 
   await app.register(deviceRoutes)

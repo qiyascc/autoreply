@@ -163,7 +163,10 @@ class Native {
     return json['code'] as String?;
   }
 
-  static Future<Map<String, dynamic>> bridgeStats() => _call('bridgeStats');
+  static Future<BridgeState> bridgeStats() async =>
+      BridgeState.fromJson(await _call('bridgeStats'));
+
+  static Future<void> bridgeReconnect() => _call('bridgeReconnect');
 
   static Future<AppStatus> bridgeLogout() async =>
       AppStatus.fromJson(await _call('bridgeLogout'));
@@ -188,8 +191,10 @@ class AppStatus {
     required this.accessibilityEnabled,
     required this.setupComplete,
     required this.recent,
+    required this.appVersion,
   });
 
+  final String appVersion;
   final Map<String, String> settings;
   final DayCounts today;
   final Health health;
@@ -210,6 +215,7 @@ class AppStatus {
         recent: ((json['recent'] as List?) ?? const [])
             .map((e) => LogEntry.fromJson(e))
             .toList(),
+        appVersion: json['appVersion'] as String? ?? '?',
       );
 
   bool get masterEnabled => settings['master_enabled'] == '1';
@@ -639,6 +645,58 @@ class SetupStatus {
 
   bool get allPermissionsGranted => permissions.every((p) => p.granted);
   bool get ready => allPermissionsGranted && batteryUnrestricted && exactAlarms;
+}
+
+/// The bridge's own account of itself.
+///
+/// The app used to infer "linked" from having a token stored locally, which meant the
+/// Home screen said "Linked and ready" while the server had been logged out for hours.
+/// This is the answer to the only question that matters: can a message go out right now?
+class BridgeState {
+  const BridgeState({
+    required this.linked,
+    required this.connected,
+    required this.canReconnect,
+    this.status,
+    this.messagesSent = 0,
+    this.lastError,
+    this.reachable = true,
+  });
+
+  final bool linked;
+  final bool connected;
+  final bool canReconnect;
+  final String? status;
+  final int messagesSent;
+  final String? lastError;
+
+  /// False when the bridge could not be reached at all — a different problem from
+  /// being reachable but disconnected from WhatsApp.
+  final bool reachable;
+
+  factory BridgeState.fromJson(Map<String, dynamic> json) => BridgeState(
+        linked: json['linked'] as bool? ?? false,
+        connected: json['connected'] as bool? ?? false,
+        canReconnect: json['canReconnect'] as bool? ?? false,
+        status: json['status'] as String?,
+        messagesSent: json['messagesSent'] as int? ?? 0,
+        lastError: json['lastError'] as String?,
+      );
+
+  static const BridgeState unreachable = BridgeState(
+    linked: false,
+    connected: false,
+    canReconnect: false,
+    reachable: false,
+  );
+
+  String get summary {
+    if (!reachable) return 'Bridge unreachable';
+    if (connected) return 'Linked and ready';
+    if (!linked) return 'Not linked yet';
+    if (canReconnect) return lastError == null ? 'Disconnected' : 'Disconnected — $lastError';
+    return 'Session ended — pair again';
+  }
 }
 
 class PairingSession {

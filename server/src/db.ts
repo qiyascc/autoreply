@@ -193,6 +193,9 @@ export const queries = {
     'DELETE FROM auth_keys WHERE session_id = ? AND category = ? AND key_id = ?',
   ),
   authKeysClear: db.prepare('DELETE FROM auth_keys WHERE session_id = ?'),
+  countCreds: db.prepare<[string], { n: number }>(
+    "SELECT COUNT(*) AS n FROM auth_keys WHERE session_id = ? AND category = 'creds'",
+  ),
 
   insertSentMessage: db.prepare(
     `INSERT INTO sent_messages (session_id, device_id, to_number, body, wa_message_id, status, error, created_at)

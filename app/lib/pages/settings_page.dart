@@ -528,7 +528,7 @@ class _SettingsPageState extends State<SettingsPage> {
             children: [
               InsetTile(
                 title: 'Autoreply',
-                value: 'Version 1.0.0',
+                value: 'Version ${status.appVersion}',
                 leading: ClipRRect(
                   borderRadius: BorderRadius.circular(7),
                   child: Image.asset('assets/brand/icon_256.png', width: 29, height: 29),

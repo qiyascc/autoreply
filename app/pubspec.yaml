@@ -3,7 +3,7 @@ description: "Autoreply — answers the calls you miss, so you don't have to."
 publish_to: 'none'
 
 # Shown in Settings › About, alongside the Qiyas CC attribution.
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.10.0

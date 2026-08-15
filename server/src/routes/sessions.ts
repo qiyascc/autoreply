@@ -100,6 +100,26 @@ export async function sessionRoutes(app: FastifyInstance): Promise<void> {
     },
   )
 
+  /**
+   * Revives a session that dropped without being unlinked. As long as the credentials
+   * survived, this beats making the user pair again.
+   */
+  app.post('/v1/reconnect', { preHandler: requireDevice }, async (req, reply) => {
+    const session = queries.activeSessionForDevice.get(deviceOf(req).id)
+      ?? queries.sessionsByDevice.all(deviceOf(req).id)[0]
+    if (!session) return reply.code(404).send({ error: 'not_found' })
+
+    try {
+      await sessions.reconnect(session.id)
+      return reply.send({ ok: true, sessionId: session.id })
+    } catch (err) {
+      if (err instanceof SendError) {
+        return reply.code(409).send({ ok: false, error: err.code, message: err.message })
+      }
+      throw err
+    }
+  })
+
   app.post<{ Params: { id: string } }>(
     '/v1/sessions/:id/logout',
     { preHandler: requireDevice },

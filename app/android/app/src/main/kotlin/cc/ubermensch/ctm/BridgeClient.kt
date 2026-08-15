@@ -77,6 +77,9 @@ object BridgeClient {
 
     fun stats(context: Context): JSONObject = request(context, "GET", "/v1/stats", null)
 
+    /** Revives a dropped session without re-pairing, while its credentials survive. */
+    fun reconnect(context: Context): JSONObject = request(context, "POST", "/v1/reconnect", null)
+
     // ---- the one that matters ------------------------------------------------------
 
     /** Sends a WhatsApp message. Throws [BridgeError] with a reason the UI can show. */
@@ -106,14 +109,19 @@ object BridgeClient {
                     ?: throw BridgeError("This phone is not registered with the bridge", "no_token", false)
                 setRequestProperty("Authorization", "Bearer $bearer")
             }
-            if (body != null) {
+            // Always declare JSON on a write method. Left unset, HttpURLConnection
+            // announces form-urlencoded and the server answers 415.
+            if (method == "POST" || method == "PUT" || method == "PATCH") {
                 doOutput = true
                 setRequestProperty("Content-Type", "application/json; charset=utf-8")
             }
         }
 
         try {
-            body?.let { conn.outputStream.use { out -> out.write(it.toString().toByteArray()) } }
+            if (conn.doOutput) {
+                val payload = (body ?: JSONObject()).toString().toByteArray()
+                conn.outputStream.use { out -> out.write(payload) }
+            }
 
             val status = conn.responseCode
             val stream = if (status in 200..299) conn.inputStream else conn.errorStream

@@ -173,28 +173,30 @@ class _HomePageState extends State<HomePage> {
 
   Widget _whatsappCard(BuildContext context, AppStatus status) {
     final colors = AppColors.of(context);
-    final bridgeMode = status.whatsappMode == 'bridge';
-    final linked = bridgeMode ? status.bridgeLinked : status.accessibilityEnabled;
 
-    return InsetSection(
-      header: 'WhatsApp',
-      children: [
-        InsetTile(
-          title: bridgeMode ? 'Server bridge' : 'On-device WhatsApp',
-          subtitle: linked
-              ? (bridgeMode ? 'Linked and ready' : 'Accessibility service is on')
-              : (bridgeMode ? 'Not linked yet' : 'Accessibility service is off'),
-          leading: GlyphBadge(
-            icon: bridgeMode ? CupertinoIcons.antenna_radiowaves_left_right : CupertinoIcons.device_phone_portrait,
-            color: linked ? colors.success : colors.secondaryLabel,
+    // On-device mode is answered entirely by the phone, so no round trip is needed.
+    if (status.whatsappMode != 'bridge') {
+      final on = status.accessibilityEnabled;
+      return InsetSection(
+        header: 'WhatsApp',
+        children: [
+          InsetTile(
+            title: 'On-device WhatsApp',
+            subtitle: on ? 'Accessibility service is on' : 'Accessibility service is off',
+            leading: GlyphBadge(
+              icon: CupertinoIcons.device_phone_portrait,
+              color: on ? colors.success : colors.secondaryLabel,
+            ),
+            showChevron: true,
+            onTap: () => Navigator.of(context).push(
+              CupertinoPageRoute<void>(builder: (_) => const WhatsAppLinkPage()),
+            ),
           ),
-          showChevron: true,
-          onTap: () => Navigator.of(context).push(
-            CupertinoPageRoute<void>(builder: (_) => const WhatsAppLinkPage()),
-          ),
-        ),
-      ],
-    );
+        ],
+      );
+    }
+
+    return const _BridgeCard();
   }
 
   Widget _recentSection(BuildContext context, AppStatus status) {
@@ -265,6 +267,96 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
+}
+
+/// Asks the bridge how it is actually doing, rather than assuming a stored token means
+/// a working link. Offers a one-tap reconnect while the credentials are still alive.
+class _BridgeCard extends StatefulWidget {
+  const _BridgeCard();
+
+  @override
+  State<_BridgeCard> createState() => _BridgeCardState();
+}
+
+class _BridgeCardState extends State<_BridgeCard> {
+  BridgeState? _state;
+  bool _reconnecting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    try {
+      final state = await Native.bridgeStats();
+      if (mounted) setState(() => _state = state);
+    } catch (_) {
+      if (mounted) setState(() => _state = BridgeState.unreachable);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final state = _state;
+
+    final color = state == null
+        ? colors.secondaryLabel
+        : state.connected
+            ? colors.success
+            : state.reachable
+                ? colors.warning
+                : colors.danger;
+
+    return InsetSection(
+      header: 'WhatsApp',
+      children: [
+        InsetTile(
+          title: 'Server bridge',
+          subtitle: state?.summary ?? 'Checking…',
+          leading: GlyphBadge(
+            icon: CupertinoIcons.antenna_radiowaves_left_right,
+            color: color,
+          ),
+          trailing: state == null ? const CupertinoActivityIndicator(radius: 8) : null,
+          showChevron: state != null,
+          onTap: state == null
+              ? null
+              : () async {
+                  await Navigator.of(context).push(
+                    CupertinoPageRoute<void>(builder: (_) => const WhatsAppLinkPage()),
+                  );
+                  await _refresh();
+                },
+        ),
+        if (state != null && state.canReconnect)
+          InsetTile(
+            title: _reconnecting ? 'Reconnecting…' : 'Reconnect',
+            titleColor: colors.tint,
+            onTap: _reconnecting ? null : _reconnect,
+            trailing: _reconnecting
+                ? const CupertinoActivityIndicator(radius: 8)
+                : null,
+          ),
+      ],
+    );
+  }
+
+  Future<void> _reconnect() async {
+    setState(() => _reconnecting = true);
+    try {
+      await Native.bridgeReconnect();
+      // The socket needs a moment to finish its handshake before stats tell the truth.
+      await Future<void>.delayed(const Duration(seconds: 3));
+      await _refresh();
+    } catch (e) {
+      if (mounted) await showError(context, e, title: 'Could not reconnect');
+    } finally {
+      if (mounted) setState(() => _reconnecting = false);
+    }
   }
 }
 

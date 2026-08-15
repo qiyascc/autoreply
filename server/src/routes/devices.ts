@@ -53,14 +53,19 @@ export async function deviceRoutes(app: FastifyInstance): Promise<void> {
 
   app.get('/v1/stats', { preHandler: requireDevice }, async (req) => {
     const device = deviceOf(req)
+    // Fall back to the newest session of any status, so a dropped link reports itself
+    // honestly instead of looking like it was never set up.
     const session = queries.activeSessionForDevice.get(device.id)
-    if (!session) return { linked: false }
+      ?? queries.sessionsByDevice.all(device.id)[0]
+    if (!session) return { linked: false, connected: false, canReconnect: false }
 
     const dayAgo = now() - 24 * 60 * 60 * 1000
     const today = queries.countSentSince.get(session.id, dayAgo)
     return {
-      linked: true,
+      linked: session.status !== 'logged_out',
       connected: sessions.isConnected(session.id),
+      canReconnect:
+        !sessions.isConnected(session.id) && sessions.hasCredentials(session.id),
       status: session.status,
       phone: session.phone,
       jid: session.jid,

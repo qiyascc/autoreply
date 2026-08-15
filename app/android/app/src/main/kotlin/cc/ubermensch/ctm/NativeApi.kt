@@ -192,6 +192,7 @@ class NativeApi(private val context: Context, private val activity: () -> Activi
                 JSONObject().put("code", code ?: JSONObject.NULL).put("pending", code == null)
             }
             "bridgeStats" -> replyAsync(result) { BridgeClient.stats(context) }
+            "bridgeReconnect" -> replyAsync(result) { BridgeClient.reconnect(context) }
             "bridgeLogout" -> replyAsync(result) {
                 BridgeClient.logout(context)
                 status()
@@ -215,7 +216,11 @@ class NativeApi(private val context: Context, private val activity: () -> Activi
 
     private fun status(): JSONObject {
         val today = Stats.today(context)
+        // Read the version from the package rather than repeating it in Dart, so
+        // "which build is this?" always has one answer.
+        val pkg = context.packageManager.getPackageInfo(context.packageName, 0)
         return JSONObject()
+            .put("appVersion", pkg.versionName ?: "?")
             .put("settings", Db.get(context).allSettings())
             .put("today", Stats.asJson(today))
             .put("health", Stats.health(context))
