@@ -1,0 +1,27 @@
+name: ctm
+description: "Autoreply — answers the calls you miss, so you don't have to."
+publish_to: 'none'
+
+# Shown in Settings › About, alongside the Qiyas CC attribution.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+# No third-party runtime packages by design. Every background path — call detection,
+# alarms, SMS, the bridge client, notifications — lives in Kotlin, because it has to run
+# when no Flutter engine is alive. The UI only needs the framework itself.
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/brand/

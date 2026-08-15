@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Link WhatsApp</title>
+<style>
+  :root{
+    color-scheme: light dark;
+    --bg:#f2f2f7; --card:#fff; --text:#1c1c1e; --muted:#8e8e93;
+    --sep:rgba(60,60,67,.18); --tint:#007aff; --track:rgba(118,118,128,.12);
+    --ok:#34c759; --warn:#ff9f0a; --bad:#ff3b30;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#000; --card:#1c1c1e; --text:#f2f2f7; --muted:#8e8e93;
+           --sep:rgba(84,84,88,.6); --tint:#0a84ff; --track:rgba(118,118,128,.24);
+           --ok:#30d158; --warn:#ff9f0a; --bad:#ff453a; }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100dvh; background:var(--bg); color:var(--text);
+    font:400 17px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex; align-items:center; justify-content:center; padding:24px 16px;
+  }
+  .card{ width:100%; max-width:26rem; }
+  header{ text-align:center; margin-bottom:22px }
+  h1{ font-size:26px; line-height:1.2; font-weight:600; letter-spacing:-.02em; margin:0 0 6px }
+  .phone{ color:var(--muted); font-size:15px; margin:0 }
+
+  .status{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--card); border-radius:14px; padding:11px 14px; margin-bottom:16px;
+    font-size:15px;
+  }
+  .dot{ width:9px; height:9px; border-radius:50%; background:var(--muted); flex:none;
+        transition:background .25s }
+  .dot.waiting{ background:var(--warn); animation:pulse 1.6s ease-in-out infinite }
+  .dot.ok{ background:var(--ok) }
+  .dot.bad{ background:var(--bad) }
+  @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
+
+  .seg{
+    display:grid; grid-template-columns:1fr 1fr; gap:2px; padding:2px;
+    background:var(--track); border-radius:9px; margin-bottom:18px;
+  }
+  .seg button{
+    appearance:none; border:0; background:transparent; color:var(--text);
+    font:inherit; font-size:14px; font-weight:500; padding:7px 8px;
+    border-radius:7px; cursor:pointer; transition:background .18s;
+  }
+  .seg button[aria-selected="true"]{
+    background:var(--card); box-shadow:0 1px 3px rgba(0,0,0,.12);
+  }
+
+  .panel{ background:var(--card); border-radius:16px; padding:24px 20px; text-align:center }
+  .panel[hidden]{ display:none }
+
+  .qr-frame{
+    width:264px; height:264px; margin:0 auto 16px; border-radius:12px;
+    background:#fff; display:grid; place-items:center; overflow:hidden;
+  }
+  .qr-frame img{ width:100%; height:100%; display:block }
+  .qr-frame .placeholder{ color:#8e8e93; font-size:14px }
+
+  .code{
+    display:flex; justify-content:center; gap:6px; margin:8px 0 18px;
+    font-variant-numeric:tabular-nums;
+  }
+  .code span{
+    display:grid; place-items:center; width:34px; height:46px; border-radius:9px;
+    background:var(--track); font-size:24px; font-weight:600; letter-spacing:0;
+  }
+  .code.pending span{ opacity:.35 }
+
+  ol{ text-align:left; margin:0; padding-left:1.3em; color:var(--muted); font-size:14px; line-height:1.65 }
+  ol strong{ color:var(--text); font-weight:500 }
+
+  .btn{
+    appearance:none; border:0; width:100%; margin-top:16px; padding:13px;
+    border-radius:12px; background:var(--tint); color:#fff; font:inherit;
+    font-size:16px; font-weight:500; cursor:pointer;
+  }
+  .btn[disabled]{ opacity:.45; cursor:default }
+
+  .done{ text-align:center; padding:36px 20px }
+  .done .tick{
+    width:62px; height:62px; margin:0 auto 16px; border-radius:50%;
+    background:var(--ok); display:grid; place-items:center;
+  }
+  .done .tick svg{ width:32px; height:32px; stroke:#fff; stroke-width:3;
+                   fill:none; stroke-linecap:round; stroke-linejoin:round }
+  .done h2{ font-size:20px; font-weight:600; margin:0 0 6px }
+  .done p{ margin:0; color:var(--muted); font-size:15px }
+
+  footer{ text-align:center; color:var(--muted); font-size:13px; margin-top:18px; line-height:1.5 }
+</style>
+</head>
+<body>
+<div class="card">
+  <header>
+    <h1>Link WhatsApp</h1>
+    <p class="phone">__PHONE__</p>
+  </header>
+
+  <div class="status" id="status">
+    <span class="dot waiting" id="dot"></span>
+    <span id="statusText">Starting the bridge…</span>
+  </div>
+
+  <div id="pairing">
+    <div class="seg" role="tablist">
+      <button role="tab" id="tabQr" aria-selected="true" aria-controls="panelQr">QR code</button>
+      <button role="tab" id="tabCode" aria-selected="false" aria-controls="panelCode">Pairing code</button>
+    </div>
+
+    <section class="panel" id="panelQr" role="tabpanel">
+      <div class="qr-frame"><span class="placeholder" id="qrPlaceholder">Waiting for QR…</span></div>
+      <ol>
+        <li>Open <strong>WhatsApp</strong> on another phone</li>
+        <li>Go to <strong>Settings › Linked devices</strong></li>
+        <li>Tap <strong>Link a device</strong> and scan this code</li>
+      </ol>
+    </section>
+
+    <section class="panel" id="panelCode" role="tabpanel" hidden>
+      <div class="code pending" id="codeBoxes">
+        <span>–</span><span>–</span><span>–</span><span>–</span>
+        <span>–</span><span>–</span><span>–</span><span>–</span>
+      </div>
+      <ol>
+        <li>Open <strong>WhatsApp</strong> on this phone</li>
+        <li>Go to <strong>Settings › Linked devices</strong></li>
+        <li>Tap <strong>Link a device</strong>, then <strong>Link with phone number instead</strong></li>
+        <li>Type the code above</li>
+      </ol>
+      <button class="btn" id="requestCode">Request pairing code</button>
+    </section>
+  </div>
+
+  <section class="panel done" id="done" hidden>
+    <div class="tick"><svg viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6.5"/></svg></div>
+    <h2>WhatsApp linked</h2>
+    <p>You can close this page. The app is connected.</p>
+  </section>
+
+  <footer>This link works once and expires shortly.<br>Never share it.</footer>
+</div>
+
+<script>
+(function () {
+  var token = '__TOKEN__';
+  var base = '/link/' + token;
+
+  var dot = document.getElementById('dot');
+  var statusText = document.getElementById('statusText');
+  var pairing = document.getElementById('pairing');
+  var done = document.getElementById('done');
+  var qrFrame = document.querySelector('.qr-frame');
+  var codeBoxes = document.getElementById('codeBoxes');
+  var requestBtn = document.getElementById('requestCode');
+  var tabQr = document.getElementById('tabQr');
+  var tabCode = document.getElementById('tabCode');
+  var panelQr = document.getElementById('panelQr');
+  var panelCode = document.getElementById('panelCode');
+
+  function selectTab(which) {
+    var qr = which === 'qr';
+    tabQr.setAttribute('aria-selected', String(qr));
+    tabCode.setAttribute('aria-selected', String(!qr));
+    panelQr.hidden = !qr;
+    panelCode.hidden = qr;
+  }
+  tabQr.addEventListener('click', function () { selectTab('qr'); });
+  tabCode.addEventListener('click', function () { selectTab('code'); });
+
+  function setStatus(text, kind) {
+    statusText.textContent = text;
+    dot.className = 'dot' + (kind ? ' ' + kind : '');
+  }
+
+  function showQr(dataUrl) {
+    qrFrame.innerHTML = '';
+    var img = new Image();
+    img.alt = 'WhatsApp pairing QR code';
+    img.src = dataUrl;
+    qrFrame.appendChild(img);
+    setStatus('Scan the code to link', 'waiting');
+  }
+
+  function showCode(code) {
+    var chars = String(code).replace(/\s/g, '').split('');
+    codeBoxes.classList.remove('pending');
+    codeBoxes.innerHTML = '';
+    chars.forEach(function (ch) {
+      var el = document.createElement('span');
+      el.textContent = ch;
+      codeBoxes.appendChild(el);
+    });
+    requestBtn.disabled = true;
+    requestBtn.textContent = 'Code issued';
+    selectTab('code');
+    setStatus('Enter the code in WhatsApp', 'waiting');
+  }
+
+  function showConnected() {
+    pairing.hidden = true;
+    done.hidden = false;
+    setStatus('Connected', 'ok');
+    if (source) source.close();
+  }
+
+  requestBtn.addEventListener('click', function () {
+    requestBtn.disabled = true;
+    requestBtn.textContent = 'Requesting…';
+    fetch(base + '/pairing-code', { method: 'POST' })
+      .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+      .then(function (res) {
+        if (!res.ok) throw new Error(res.body && res.body.message || 'failed');
+        if (res.body.code) showCode(res.body.code);
+        else { requestBtn.textContent = 'Waiting for WhatsApp…'; }
+      })
+      .catch(function (err) {
+        requestBtn.disabled = false;
+        requestBtn.textContent = 'Request pairing code';
+        setStatus('Could not get a code: ' + err.message, 'bad');
+      });
+  });
+
+  var source = new EventSource(base + '/stream');
+
+  source.addEventListener('qr', function (e) {
+    var data = JSON.parse(e.data);
+    showQr(data.qrDataUrl);
+  });
+
+  source.addEventListener('pairing-code', function (e) {
+    showCode(JSON.parse(e.data).code);
+  });
+
+  source.addEventListener('connected', function () { showConnected(); });
+
+  source.addEventListener('status', function (e) {
+    var data = JSON.parse(e.data);
+    if (data.status === 'connected') showConnected();
+    else if (data.status === 'logged_out') setStatus(data.error || 'Session ended', 'bad');
+    else if (data.status === 'disconnected') setStatus('Reconnecting…', 'waiting');
+  });
+
+  source.addEventListener('closed', function (e) {
+    if (done.hidden) setStatus('Reconnecting…', 'waiting');
+  });
+
+  source.onerror = function () {
+    if (done.hidden) setStatus('Connection to the bridge lost — retrying…', 'bad');
+  };
+
+  fetch(base + '/state')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (s) { if (s && s.status === 'connected') showConnected(); })
+    .catch(function () {});
+})();
+</script>
+</body>
+</html>

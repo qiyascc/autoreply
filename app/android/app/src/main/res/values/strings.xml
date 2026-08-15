@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Autoreply</string>
+    <string name="whatsapp_automation_description">Lets Autoreply tap Send in WhatsApp for you when on-device delivery is enabled. Only used for the replies you configured; nothing is read or stored.</string>
+</resources>

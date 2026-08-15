@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Optional on-device WhatsApp delivery. Disabled unless the user explicitly enables it
+  in Settings, because it opens WhatsApp on screen and needs the device unlocked.
+  The default delivery path is the server bridge, which is silent.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault"
+    android:canRetrieveWindowContent="true"
+    android:notificationTimeout="100"
+    android:packageNames="com.whatsapp,com.whatsapp.w4b"
+    android:description="@string/whatsapp_automation_description"/>

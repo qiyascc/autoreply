@@ -1,0 +1,31 @@
+{
+  "name": "ctm-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WhatsApp bridge for the Call Text Machine app",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "tsc -p tsconfig.json --watch",
+    "invite": "node dist/cli/invite.js"
+  },
+  "dependencies": {
+    "@fastify/static": "^7.0.4",
+    "@hapi/boom": "^10.0.1",
+    "baileys": "6.7.24",
+    "better-sqlite3": "^11.10.0",
+    "fastify": "^4.28.1",
+    "pino": "^9.6.0",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^20.14.10",
+    "@types/qrcode": "^1.5.5",
+    "typescript": "^5.5.4"
+  }
+}

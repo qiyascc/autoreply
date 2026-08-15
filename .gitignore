@@ -1,0 +1,20 @@
+# Secrets — never commit these.
+server/.env
+server/data/
+app/android/key.properties
+app/android/*.jks
+app/android/*.keystore
+
+# Built APKs — produced by CI or `flutter build`, not source.
+*.apk
+*.aab
+
+# Build output
+server/dist/
+server/node_modules/
+app/build/
+app/.dart_tool/
+app/android/.gradle/
+app/android/local.properties
+app/.flutter-plugins-dependencies
+*.log
