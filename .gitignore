@@ -18,3 +18,11 @@ app/android/.gradle/
 app/android/local.properties
 app/.flutter-plugins-dependencies
 *.log
+
+# Remotion render output — regenerate with `npm run render` in motion/.
+# The deployed copy lives at site/explainer.mp4 and is committed.
+motion/out/
+motion/node_modules/
+
+# APKs staged for the download page are build artifacts.
+site/download/

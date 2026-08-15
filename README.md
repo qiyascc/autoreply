@@ -59,6 +59,55 @@ arriving *after* the conversation already happened is this app's worst failure m
 
 ---
 
+## Landing site
+
+`https://ctm.ubermensch.cc` serves a single static page plus the APK downloads. nginx
+reads them straight off disk from `/opt/mobile/site`; only `/v1/`, `/link/` and
+`/healthz` reach the Node bridge.
+
+```
+/opt/mobile/site
+├── index.html        the whole page — no build step, no dependencies
+├── explainer.mp4     24 s film, rendered from motion/
+├── poster.jpg        first-frame poster
+├── icon.png
+└── download/         APKs (gitignored; they are build output)
+```
+
+Refreshing the downloads after a new build:
+
+```bash
+cd /opt/mobile/app
+flutter build apk --release --split-per-abi && flutter build apk --release
+APKS=build/app/outputs/flutter-apk
+cp $APKS/app-arm64-v8a-release.apk   /opt/mobile/site/download/Autoreply-arm64-v8a.apk
+cp $APKS/app-armeabi-v7a-release.apk /opt/mobile/site/download/Autoreply-armeabi-v7a.apk
+cp $APKS/app-x86_64-release.apk      /opt/mobile/site/download/Autoreply-x86_64.apk
+cp $APKS/app-release.apk             /opt/mobile/site/download/Autoreply-universal.apk
+chown -R www-data:www-data /opt/mobile/site
+```
+
+The page reads each file's real size with a `HEAD` request, so nothing needs editing
+when the builds change.
+
+### The film
+
+`motion/` is a Remotion project: six scenes taking the viewer from a missed call, through
+the pile of angry messages it provokes, to the same call answered automatically.
+
+```bash
+cd /opt/mobile/motion
+npm run studio                        # live editor on :3000
+npm run render                        # → out/explainer.mp4
+cp out/explainer.mp4 ../site/
+```
+
+One environment note: the host needs `fonts-noto-color-emoji` installed **and** the font
+named explicitly in the CSS stack (`src/theme.ts`). Chrome otherwise falls back to a
+monochrome symbol face and the angry-emoji scene renders as empty boxes.
+
+---
+
 ## Server
 
 ### Layout

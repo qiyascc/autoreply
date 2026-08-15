@@ -1,0 +1,35 @@
+[Unit]
+Description=CTM WhatsApp bridge (Baileys)
+Documentation=https://ctm.ubermensch.cc
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ctm
+Group=ctm
+WorkingDirectory=/opt/mobile/server
+EnvironmentFile=/opt/mobile/server/.env
+ExecStart=/usr/bin/node /opt/mobile/server/dist/index.js
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ctm-bridge
+
+# The bridge holds WhatsApp credentials; give it no more of the host than it needs.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/mobile/server/data
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryMax=768M
+
+[Install]
+WantedBy=multi-user.target
